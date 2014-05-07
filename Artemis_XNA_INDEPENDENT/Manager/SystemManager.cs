@@ -43,7 +43,7 @@ namespace Artemis.Manager
     using global::System.Collections.Generic;
     using global::System.Linq;
     using global::System.Reflection;
-#if FULLDOTNET || CLIENTPROFILE
+#if !NET35 && (FULLDOTNET || CLIENTPROFILE)
     using global::System.Threading.Tasks;
 #endif
     using Artemis.Attributes;
@@ -306,7 +306,11 @@ namespace Artemis.Manager
         /// <param name="entitySystems">The entity systems.</param>
         private static void ProcessBagAsynchronous(IEnumerable<EntitySystem> entitySystems)
         {
+#if !NET35
             Parallel.ForEach(entitySystems, entitySystem => entitySystem.Process());
+#else
+            _35Async.ParallelForEach(entitySystems, entitySystem => entitySystem.Process());
+#endif
         }
 #endif
 

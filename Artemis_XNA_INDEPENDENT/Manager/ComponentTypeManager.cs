@@ -43,7 +43,7 @@ namespace Artemis.Manager
     using global::System.Diagnostics;
     using global::System.Linq;
     using global::System.Reflection;
-#if !XBOX && !WINDOWS_PHONE  && !PORTABLE
+#if !NET35 && !XBOX && !WINDOWS_PHONE  && !PORTABLE
     using global::System.Numerics;
 #endif
 #if XBOX || WINDOWS_PHONE || PORTABLE || FORCEINT32

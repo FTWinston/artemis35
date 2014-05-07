@@ -42,7 +42,7 @@ namespace Artemis.Manager
     using global::System.Collections.Generic;
     using Artemis.System;
 
-#if !XBOX && !WINDOWS_PHONE  && !PORTABLE
+#if !NET35 && !XBOX && !WINDOWS_PHONE  && !PORTABLE
     using global::System.Numerics;
 #endif
 #if XBOX || WINDOWS_PHONE || PORTABLE || FORCEINT32

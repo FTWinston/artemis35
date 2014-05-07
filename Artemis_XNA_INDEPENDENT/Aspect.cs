@@ -41,7 +41,7 @@ namespace Artemis
     using global::System;
     using global::System.Diagnostics;
     using global::System.Linq;
-#if !XBOX && !WINDOWS_PHONE  && !PORTABLE
+#if !NET35 && !XBOX && !WINDOWS_PHONE  && !PORTABLE
     using global::System.Numerics;
 #endif
     using global::System.Text;

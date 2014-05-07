@@ -1,4 +1,5 @@
-﻿#region File description
+﻿
+#region File description
 
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ParallelEntityProcessingSystem.cs" company="GAMADU.COM">
@@ -41,7 +42,8 @@ namespace Artemis.System
 
     using global::System;
     using global::System.Collections.Generic;
-#if FULLDOTNET || METRO || CLIENTPROFILE
+#if NET35
+#elif FULLDOTNET || METRO || CLIENTPROFILE
     using global::System.Threading.Tasks;
 #else
     using ParallelTasks;
@@ -52,7 +54,7 @@ namespace Artemis.System
     /// <summary>Class ParallelEntityProcessingSystem.</summary>
     public abstract class ParallelEntityProcessingSystem : EntitySystem
     {
-#if FULLDOTNET || CLIENTPROFILE
+#if !NET35 && (FULLDOTNET || CLIENTPROFILE)
         /// <summary>The factory.</summary>
         private readonly TaskFactory factory;
 #endif
@@ -63,7 +65,7 @@ namespace Artemis.System
         protected ParallelEntityProcessingSystem(Type requiredType, params Type[] otherTypes)
             : base(EntitySystem.GetMergedTypes(requiredType, otherTypes))
         {
-#if FULLDOTNET || CLIENTPROFILE
+#if !NET35 && (FULLDOTNET || CLIENTPROFILE)
             this.factory = new TaskFactory(TaskScheduler.Default);
 #endif
         }
@@ -73,7 +75,7 @@ namespace Artemis.System
         protected ParallelEntityProcessingSystem(Aspect aspect)
             : base(aspect)
         {
-#if FULLDOTNET || CLIENTPROFILE
+#if !NET35 && (FULLDOTNET || CLIENTPROFILE)
             this.factory = new TaskFactory(TaskScheduler.Default);
 #endif
         }
@@ -95,11 +97,18 @@ namespace Artemis.System
             Entity[] threadEntities = new Entity[entities.Values.Count];
             entities.Values.CopyTo(threadEntities, 0);
             int numberOfEntities = entities.Values.Count - 1;
+#if NET35
+            int[] initials = new int[(int)(simultaneous + 0.5f)];
+#else
             List<Task> tasks = new List<Task>();
-
+#endif
             for (int processorIndex = 0; processorIndex < simultaneous; ++processorIndex)
             {
-                int initial = numberOfEntities;
+#if NET35
+                initials[processorIndex] = numberOfEntities;
+#else
+                int initial = numberOfEntities;           
+
 #if FULLDOTNET || CLIENTPROFILE
                 tasks.Add(
                     this.factory.StartNew(
@@ -108,16 +117,26 @@ namespace Artemis.System
 #else
                 tasks.Add(Parallel.Start(
 #endif
-                        () =>
+
+                    () =>
                             {
                                 for (int spartialIndex = initial; spartialIndex > initial - perThread && spartialIndex >= 0; --spartialIndex)
                                 {
                                     this.Process(threadEntities[spartialIndex]);
                                 }
                             }));
+#endif
                 numberOfEntities -= perThread;
             }
-#if FULLDOTNET
+#if NET35
+            Artemis.Utils._35Async.ParallelForEach(initials, (initial) =>
+            {
+                for (int spartialIndex = initial; spartialIndex > initial - perThread && spartialIndex >= 0; --spartialIndex)
+                {
+                    this.Process(threadEntities[spartialIndex]);
+                }
+            });
+#elif FULLDOTNET
             Task.WaitAll(tasks.ToArray());
 #else
             foreach (Task task in tasks)
